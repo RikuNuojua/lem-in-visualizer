@@ -1,7 +1,9 @@
-# lem-in-visualizer
+## lem-in-visualizer
 My lem-in visualizer for a friend who is studying at a 42 school. Build with C and raylib.
 Depencies: raylib
-# usage:
+### usage:
 `make`
+
 `./a.out < in1`
+
 press esc to close window
