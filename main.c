@@ -387,7 +387,7 @@ main()
             int offset_y;
             float zoom;
             {
-                float win_ratio = win_x / win_y;
+                float win_ratio = (float)win_x / (float)win_y;
                 float viewbox_ratio = (float)(max_x - min_x) / (float)(max_y - min_y);
                 if(win_ratio > viewbox_ratio)
                 {
@@ -471,15 +471,15 @@ main()
 
                         x = x + (int)(((float)next_x - (float)x) * lerp);
                         y = y + (int)(((float)next_y - (float)y) * lerp);
-                        DrawCircle(x, y, 0.3f*zoom, BLACK);
+                        DrawCircle(x, y, 0.2f*zoom, (Color){20, 15, 15, 215});
                     }
 
                     //draw room names
                     for(int i = 0; i < room_count; i++)
                     {
-                        int x = p_room_xs[i] * zoom + offset_x - 20;
-                        int y = p_room_ys[i] * zoom + offset_y - 50;
-                        int size = (int)(zoom*0.35f);
+                        int size = (int)(zoom*0.45f);
+                        int x = p_room_xs[i] * zoom + offset_x - (MeasureText((const char*)(p_room_names + i*NAME_LENGTH), size)/2);
+                        int y = p_room_ys[i] * zoom + offset_y - (int)((float)size*1.5f);
                         DrawText((const char*)(p_room_names + i*NAME_LENGTH), x, y, size, RED);
                     }
                 }
