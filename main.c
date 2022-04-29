@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#define TIME_ANT_IS_MOVING 0.75f
 #define BYTES_PER_READ 64
 #define NAME_LENGTH 32
 #define FPS 60
@@ -43,16 +44,21 @@ main()
 
 
     //parse
-    int* p_ant_x_ticks; // xtick-0(ant-0 ant-1 ant-2... ant-ant_count) xtick-1(..)... xtick-tick_count(...)
-    int* p_ant_y_ticks; // tick_count grows with realloc
     size_t ant_count;
-    size_t tick_count;
-    size_t room_count;
+
     int start_index;
     int end_index;
-    char* p_room_names; //use NAME_LENGTH
+    char* p_room_names; //use NAME_LENGTH for stride
     int* p_room_xs;
     int* p_room_ys;
+    size_t room_count;
+
+    int* p_links; // ints in pairs. to and from. (indexes to rooms)
+    size_t links_count;
+
+    int* p_ant_x_ticks; // xtick-0(ant-0 ant-1 ant-2... ant-ant_count) xtick-1(..)... xtick-tick_count(...)
+    int* p_ant_y_ticks; // tick_count grows with realloc
+    size_t tick_count;
     {
         char* p = p_text;
         //ant count
@@ -173,12 +179,61 @@ main()
         //rooms
 
         //links
-        //TODO: save links and draw em!
+        /* links skip!:
         {
             while(!(*p == 'L' && p[-1] == '\n')) p++;
         }
+        */
+        p_links = NULL; // ints in pairs. to and from. (indexes to rooms)
+        links_count = 0;
+
+        size_t links_allocated = 0;
+        char seperator = '-';
+        int match;
+        while(1)
+        {
+            match = -1;
+            if(links_count == links_allocated)
+            {
+                links_allocated += 2;
+                p_links = realloc(p_links, sizeof(int) * 2 * links_allocated);
+            }
+            for(int i = 0; i < room_count; i++)
+            {
+                int ci = 0;
+                while(p_room_names[i*NAME_LENGTH + ci] == p[ci]) ci++;
+                if(p_room_names[i*NAME_LENGTH + ci] == '\0' && p[ci] == seperator)
+                {
+                    match = i;
+                    p += ci;
+                    p++; //skips seperator
+                    break;
+                }
+            }
+            if(match == -1) 
+                crash("Link name not found\n");
+            if(seperator == '-')
+            {
+                p_links[links_count*2] = match;
+                seperator = '\n';
+                continue;
+            }
+            else if(seperator == '\n')
+            {
+                p_links[links_count*2 + 1] = match;
+                links_count++;
+                if(*p == '\n') //double nl is end of links
+                {
+                    p++; //skip to expected L
+                    break;
+                }
+                seperator = '-';
+                continue;
+            }
+            crash("Error: links\n");
+        }
         //links
-        
+
         //ant ticks
         size_t tick_allocation = 8;
         tick_count = 1;
@@ -195,11 +250,11 @@ main()
             int nl_detected = 1;
             while(1)
             {
-                if(*p != 'L')
+                if(*p != 'L') //L is expected
                 {
-                    if(*p == '\n' || *p == 0) break;
+                    if(*p == '\n' || *p == 0) break; //todo think about this
                     printf("\n%c", *p);
-                    crash("-fuck\n");
+                    crash("-badword\n");
                 }
                 p++;
                 if(tick_allocation <= tick_count + 1)
@@ -224,7 +279,7 @@ main()
                         ant += *p - '0';
                         p++;
                     }
-                    ant--; //input ant numbers start with 1?
+                    ant--; //input ant numbers start with 1
                 }
                 else crash("Error: ant number");
                 if(*p != '-') crash("Error: ant seperator");
@@ -268,7 +323,7 @@ main()
                         n++;
                         continue;
                     }
-                    assert(0);
+                    crash("Error: impossible\n");
                 }
                 if(match == -1) crash("Error: instruction bad name");
                 p_ant_x_ticks[tick_count * ant_count + ant] = p_room_xs[match];
@@ -285,58 +340,142 @@ main()
     {
         int win_x;
         int win_y;
-        int x;
-        int y;
-        int next_x;
-        int next_y;
-        float lerp;
         size_t frame = 0;
-        float zoom = 32.0;
 
-        SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-        InitWindow(0, 0, "raylib [core] example - basic window");
+        SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
+        InitWindow(0, 0, "lem-in visualizer");
         SetTargetFPS(FPS);
+
+        //viewbox
+        int max_x = p_room_xs[0];
+        int min_x = p_room_xs[0];
+        int max_y = p_room_ys[0];
+        int min_y = p_room_ys[0];
+        {
+            for(int i = 0; i < room_count; i++)
+            {
+                int x, y;
+                x = p_room_xs[i];
+                y = p_room_ys[i];
+                if(x > max_x) max_x = x;
+                if(x < min_x) min_x = x;
+                if(y > max_y) max_y = y;
+                if(y < min_y) min_y = y;
+            }
+            //TODO: fix margins so its in pixel space
+            max_x += 2;
+            max_y += 2;
+            min_x -= 2;
+            min_y -= 2;
+        }
+        printf("x: max: %d, min: %d\ny: max: %d, min: %d\n", max_x, min_x, max_y, min_y);
 
         while (!WindowShouldClose())
         {
             win_x = GetScreenWidth();
             win_y = GetScreenHeight();
-            int offset_x = win_x/2;
-            int offset_y = win_y/2;
-            int n;
+
+            //offset and zoom
+            //offset is in pixels
+            int offset_x;
+            int offset_y;
+            float zoom;
+            {
+                float win_ratio = win_x / win_y;
+                float viewbox_ratio = (float)(max_x - min_x) / (float)(max_y - min_y);
+                if(win_ratio > viewbox_ratio)
+                {
+                    zoom = (float)win_y / (float)(max_y - min_y);
+                }
+                else
+                {
+                    zoom = (float)win_x / (float)(max_x - min_x);
+                }
+                offset_x = -(int)((float)min_x * zoom);
+                offset_y = -(int)((float)min_y * zoom);
+            }
+
             BeginDrawing();
             {
-                ClearBackground(RAYWHITE);
-                DrawFPS(0, 0);
-                //draw rooms
-                Color color;
-                for(int i = 0; i < room_count; i++)
+                Color bg_color = {45, 45, 45, 255};
+                ClearBackground(bg_color);
+                //DrawFPS(0, 0);
+                //draw links
                 {
-                    x = offset_x - 20 + (int)(zoom * (float)p_room_xs[i]);
-                    y = offset_y - 20 + (int)(zoom * (float)p_room_ys[i]);
-                    color = GRAY;
-                    if(i == start_index) color = DARKBLUE;
-                    if(i == end_index) color = MAROON;
-                    DrawRectangle(x, y, 40, 40, color);
-                }
-                lerp = ((float)(frame % ((size_t)FRAMES_PER_TICK))) / (float)FRAMES_PER_TICK;
-                size_t anim_tick = (frame % ((size_t)tick_count * (size_t)FRAMES_PER_TICK)) / ((size_t)FRAMES_PER_TICK);
-                DrawCircle(10, 10, 2.0f + 25.0f*(float)anim_tick, BLACK);
-                for(size_t i = 0; i < ant_count; i++)
-                {
-                    n = anim_tick*ant_count + i;
-                    x = offset_x + (int)(zoom * (float)p_ant_x_ticks[n]);
-                    y = offset_y + (int)(zoom * (float)p_ant_y_ticks[n]);
-                    //dont interp after last frame
-                    n = (1+anim_tick) * ant_count + i;
-                    if(anim_tick < tick_count-1) next_x = offset_x + (int)(zoom * (float)p_ant_x_ticks[n]);
-                    else next_x = x;
-                    if(anim_tick < tick_count-1) next_y = offset_y + (int)(zoom * (float)p_ant_y_ticks[n]);
-                    else next_y = y;
+                    Vector2 from, to;
+                    for(int i = 0; i < links_count; i++)
+                    {
+                        from.x = (float) p_room_xs[p_links[i*2]] * zoom + (float)offset_x;
+                        from.y = (float) p_room_ys[p_links[i*2]] * zoom + (float)offset_y;
+                        to.x = (float) p_room_xs[p_links[i*2 + 1]] * zoom + (float)offset_x;
+                        to.y = (float) p_room_ys[p_links[i*2 + 1]] * zoom + (float)offset_y;
+                        //printf("link: %d from: %f %f\n to: %f %f\n", i, from.x, from.y, to.x, to.y);
 
-                    x = x + (int)(((float)next_x - (float)x) * lerp);
-                    y = y + (int)(((float)next_y - (float)y) * lerp);
-                    DrawCircle(x, y, 10.0f, BLACK);
+                        DrawLineEx(from, to, 0.12f * zoom, LIGHTGRAY);
+                    }
+                }
+
+                //draw rooms
+                {
+                    int x;
+                    int y;
+                    Color color;
+                    for(int i = 0; i < room_count; i++)
+                    {
+                        int size_x = (int)(0.25f*zoom);
+                        int size_y = (int)(0.25f*zoom);
+                        x = offset_x - (size_x/2) + (int)(zoom * (float)p_room_xs[i]);
+                        y = offset_y - (size_y/2) + (int)(zoom * (float)p_room_ys[i]);
+                        color = GRAY;
+                        if(i == start_index) color = DARKBLUE;
+                        if(i == end_index) color = MAROON;
+                        DrawRectangle(x, y, size_x, size_y, color);
+                    }
+                }
+                //draw ants
+                {
+                    int x;
+                    int y;
+                    int next_x;
+                    int next_y;
+                    float lerp;
+                    int n;
+
+                    lerp = (((float)(frame % ((size_t)FRAMES_PER_TICK))) / (float)FRAMES_PER_TICK)  / (float)TIME_ANT_IS_MOVING;
+                    if(lerp > 1.0f) lerp = 1.0f;
+                    size_t anim_tick = (frame % ((size_t)tick_count * (size_t)FRAMES_PER_TICK)) / ((size_t)FRAMES_PER_TICK);
+                    {
+                        char* p_c = malloc(2);
+                        p_c[0] = '0' + anim_tick;
+                        p_c[1] = '\0';
+                        DrawText((const char*)p_c, 15, 5, 64, RAYWHITE);
+                        free(p_c);
+                    }
+                    for(size_t i = 0; i < ant_count; i++)
+                    {
+                        n = anim_tick*ant_count + i;
+                        x = offset_x + (int)(zoom * (float)p_ant_x_ticks[n]);
+                        y = offset_y + (int)(zoom * (float)p_ant_y_ticks[n]);
+                        n = (1+anim_tick) * ant_count + i;
+                        //dont interpolate after last frame
+                        if(anim_tick < tick_count-1) next_x = offset_x + (int)(zoom * (float)p_ant_x_ticks[n]);
+                        else next_x = x;
+                        if(anim_tick < tick_count-1) next_y = offset_y + (int)(zoom * (float)p_ant_y_ticks[n]);
+                        else next_y = y;
+
+                        x = x + (int)(((float)next_x - (float)x) * lerp);
+                        y = y + (int)(((float)next_y - (float)y) * lerp);
+                        DrawCircle(x, y, 0.3f*zoom, BLACK);
+                    }
+
+                    //draw room names
+                    for(int i = 0; i < room_count; i++)
+                    {
+                        int x = p_room_xs[i] * zoom + offset_x - 20;
+                        int y = p_room_ys[i] * zoom + offset_y - 50;
+                        int size = (int)(zoom*0.35f);
+                        DrawText((const char*)(p_room_names + i*NAME_LENGTH), x, y, size, RED);
+                    }
                 }
             }
             EndDrawing();

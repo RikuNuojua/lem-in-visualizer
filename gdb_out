@@ -1,0 +1,105 @@
+GNU gdb (GDB) 11.2
+Copyright (C) 2022 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-pc-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<https://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from ./a.out...
+[?2004h[6 q(gdb) start[K[K[K[K[Krun < in2
+[?2004lStarting program: /home/rkl/c/ants_window/a.out < in2
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/libthread_db.so.1".
+[New Thread 0x7fffec862640 (LWP 6108)]
+[New Thread 0x7fffe7ebe640 (LWP 6109)]
+[New Thread 0x7fffe76bd640 (LWP 6110)]
+[New Thread 0x7fffe6ebc640 (LWP 6111)]
+[New Thread 0x7fffe66bb640 (LWP 6112)]
+[New Thread 0x7fffe5eba640 (LWP 6113)]
+[New Thread 0x7fffe56b9640 (LWP 6114)]
+[New Thread 0x7fffe4eb8640 (LWP 6115)]
+[New Thread 0x7fffc7fff640 (LWP 6116)]
+[New Thread 0x7fffc77fe640 (LWP 6117)]
+[New Thread 0x7fffc6ffd640 (LWP 6118)]
+[New Thread 0x7fffc67fc640 (LWP 6119)]
+[New Thread 0x7fffc5ffb640 (LWP 6120)]
+[New Thread 0x7fffc57fa640 (LWP 6121)]
+[New Thread 0x7fffc4ff9640 (LWP 6122)]
+[New Thread 0x7fffa7fff640 (LWP 6123)]
+[New Thread 0x7fffa77fe640 (LWP 6124)]
+[New Thread 0x7fffa6ffd640 (LWP 6125)]
+[New Thread 0x7fffa67fc640 (LWP 6126)]
+[New Thread 0x7fffa5ffb640 (LWP 6132)]
+[Thread 0x7fffa5ffb640 (LWP 6132) exited]
+[Thread 0x7fffa6ffd640 (LWP 6125) exited]
+[Thread 0x7fffc4ff9640 (LWP 6122) exited]
+[Thread 0x7fffa67fc640 (LWP 6126) exited]
+[Thread 0x7fffa77fe640 (LWP 6124) exited]
+[Thread 0x7fffa7fff640 (LWP 6123) exited]
+[Thread 0x7fffc5ffb640 (LWP 6120) exited]
+[Thread 0x7fffc6ffd640 (LWP 6118) exited]
+[Thread 0x7fffc77fe640 (LWP 6117) exited]
+[Thread 0x7fffc57fa640 (LWP 6121) exited]
+[Thread 0x7fffe56b9640 (LWP 6114) exited]
+[Thread 0x7fffe5eba640 (LWP 6113) exited]
+[Thread 0x7fffe6ebc640 (LWP 6111) exited]
+[Thread 0x7fffe76bd640 (LWP 6110) exited]
+[Thread 0x7fffe66bb640 (LWP 6112) exited]
+[Thread 0x7fffc67fc640 (LWP 6119) exited]
+[Thread 0x7fffc7fff640 (LWP 6116) exited]
+[Thread 0x7fffe4eb8640 (LWP 6115) exited]
+[Thread 0x7fffe7ebe640 (LWP 6109) exited]
+[Thread 0x7fffec862640 (LWP 6108) exited]
+118 chars read
+Room 0: Autovuokraamo
+Room 1: Baari
+Room 2: Katu
+Mismatch (0): 'Autovuokraamo', 'Katu
+L1-Baari L2-Katu
+L2-Baari
+'
+Mismatch (0): 'Baari', 'Katu
+L1-Baari L2-Katu
+L2-Baari
+'
+Newline
+INFO: Initializing raylib 4.0
+INFO: DISPLAY: Device initialized successfully
+INFO:     > Display size: 1920 x 1080
+INFO:     > Screen size:  1920 x 1080
+INFO:     > Render size:  1920 x 1080
+INFO:     > Viewport offsets: 0, 0
+INFO: GLAD: OpenGL extensions loaded successfully
+INFO: GL: Supported extensions count: 232
+INFO: GL: OpenGL device information:
+INFO:     > Vendor:   AMD
+INFO:     > Renderer: AMD RENOIR (LLVM 13.0.1, DRM 3.44, 5.17.1-artix1-1)
+INFO:     > Version:  4.6 (Core Profile) Mesa 22.0.1
+INFO:     > GLSL:     4.60
+INFO: GL: DXT compressed textures supported
+INFO: GL: ETC2/EAC compressed textures supported
+INFO: TEXTURE: [ID 1] Texture loaded successfully (1x1 | R8G8B8A8 | 1 mipmaps)
+INFO: TEXTURE: [ID 1] Default texture loaded successfully
+INFO: SHADER: [ID 1] Vertex shader compiled successfully
+INFO: SHADER: [ID 2] Fragment shader compiled successfully
+INFO: SHADER: [ID 3] Program shader loaded successfully
+INFO: SHADER: [ID 3] Default shader loaded successfully
+INFO: RLGL: Render batch vertex buffers loaded successfully in RAM (CPU)
+INFO: RLGL: Render batch vertex buffers loaded successfully in VRAM (GPU)
+INFO: RLGL: Default OpenGL state initialized successfully
+INFO: TEXTURE: [ID 2] Texture loaded successfully (128x128 | GRAY_ALPHA | 1 mipmaps)
+INFO: FONT: Default font loaded successfully (224 glyphs)
+INFO: TIMER: Target time per frame: 16.667 milliseconds
+[Inferior 1 (process 6104) exited normally]
+[?2004h[?2004l[?2004h[6 q(gdb) [2 q(gdb) 
+[?2004l[?2004h[6 q(gdb) q!
+[?2004l[?2004h[6 q(gdb) q
+[?2004l
