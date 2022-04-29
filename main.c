@@ -99,10 +99,16 @@ main()
             {
                 if(p[1] == '#')
                 {
-                    if(0 == strncmp(p, "##start", 7)) start_index = room_count;
-                    else if(0 == strncmp(p, "##end", 5)) end_index = room_count;
-                    printf("start: %d\n", start_index);
-                    printf("end: %d\n", end_index);
+                    if(0 == strncmp(p, "##start", 7))
+                    {
+                        printf("start: %d\n", start_index);
+                        start_index = room_count;
+                    }
+                    else if(0 == strncmp(p, "##end", 5))
+                    {
+                        printf("end: %d\n", end_index);
+                        end_index = room_count;
+                    }
                 }
                 while(*p != '\n') p++;
                 p++;
@@ -313,7 +319,7 @@ main()
                     }
                     if(p_room_names[i * NAME_LENGTH + n] != p[n])
                     {
-                        printf("Mismatch (%d): '%s', '%s'\n", n, p_room_names + (i * NAME_LENGTH), p);
+                        //printf("Mismatch (%d): '%s', '%s'\n", n, p_room_names + (i * NAME_LENGTH), p);
                         n = 0;
                         i++;
                         continue;
